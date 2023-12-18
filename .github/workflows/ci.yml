@@ -1,0 +1,34 @@
+on: [push, pull_request]
+name: CI
+jobs:
+  build:
+    name: "Build on Racket '${{ matrix.os }}' '${{ matrix.racket-version }}' (${{ matrix.racket-variant }})"
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        racket-version: ["stable", "current"]
+        racket-variant: ["BC", "CS"]
+        include:
+          - racket-version: current
+            experimental: true
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - uses: Bogdanp/setup-racket@v1.9.1
+        with:
+          architecture: x64
+          distribution: full
+          variant: ${{ matrix.racket-variant }}
+          version: ${{ matrix.racket-version }}
+      - name: Installing fractal-clock and its dependencies
+        run: raco pkg install --no-docs --auto --name fractal-clock
+      - name: Compiling fractal-clock and release the binary
+        run: raco exe -o fractal-clock --gui main.rkt && raco distribute fractal-clock
+      - name: Uploading build artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: fractal-clock-${{ matrix.racket-version }}-${{ matrix.racket-variant }}-${{ matrix.os }}
+          path: fractal-clock*
+  

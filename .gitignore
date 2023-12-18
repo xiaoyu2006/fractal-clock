@@ -1,0 +1,17 @@
+*~
+\#*
+.\#*
+.DS_Store
+compiled/
+/doc/
+
+.DS_Store
+compiled/
+/doc/
+*~
+*.bak
+\#*
+.\#*
+
+/fractal-clock
+/fractal-clock.app
