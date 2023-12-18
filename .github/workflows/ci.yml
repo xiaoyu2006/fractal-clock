@@ -19,7 +19,18 @@ jobs:
       - name: Installing fractal-clock and its dependencies
         run: raco pkg install --no-docs --auto --name fractal-clock
       - name: Compiling fractal-clock and release the binary
-        run: raco exe -o main --gui main.rkt && raco distribute fractal-clock main
+        run:   |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              raco exe -o main --gui main.rkt && raco distribute fractal-clock main
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              raco exe -o main --gui main.rkt && raco distribute fractal-clock main.app
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              raco exe -o main --gui main.rkt && raco distribute fractal-clock main.exe
+          else
+              echo "$RUNNER_OS not supported"
+              exit 1
+          fi
+        shell: bash
       - name: Uploading build artifact
         uses: actions/upload-artifact@v2.2.4
         with:

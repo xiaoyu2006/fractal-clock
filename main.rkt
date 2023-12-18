@@ -3,61 +3,73 @@
 (module+ main
   (require racket/gui)
   (require racket/date)
-  (define (draw-in dc x1 y1 x2 y2 width-weight using-color remaining-depth)
+  (define (draw-in dc x-mid y-mid total-depth using-color remaining-depth)
     (if (< remaining-depth 0) (void)
         (let ()
-          ;; Time stuff
-          (define curr (current-date))
-          (define curr-h (date-hour curr))
-          (define curr-m (date-minute curr))
-          (define curr-s (date-second curr))
-          ;; Coordinates
-          (define x-mid (/ (+ x1 x2) 2))
-          (define y-mid (/ (+ y1 y2) 2))
-          (define hour-arm-length 100)
-          (define minute-arm-length 150)
-          (define second-arm-length 200)
-          (define hour-arm-end-x (+ x-mid (* hour-arm-length (sin (* 2 pi (/ curr-h 12.0))))))
-          (define hour-arm-end-y (+ y-mid (* hour-arm-length (cos (* 2 pi (/ curr-h 12.0))))))
-          (define minute-arm-end-x (+ x-mid (* minute-arm-length (sin (* 2 pi (/ curr-m 60.0))))))
-          (define minute-arm-end-y (+ y-mid (* minute-arm-length (cos (* 2 pi (/ curr-m 60.0))))))
-          (define second-arm-end-x (+ x-mid (* second-arm-length (sin (* 2 pi (/ curr-s 60.0))))))
-          (define second-arm-end-y (+ y-mid (* second-arm-length (cos (* 2 pi (/ curr-s 60.0))))))
-          ;; Draw the arms
-          (send dc set-pen (make-pen #:color using-color #:width (* width-weight 1.2)))
-          (send dc draw-line x-mid y-mid hour-arm-end-x hour-arm-end-y)
-          (send dc set-pen (make-pen #:color using-color #:width (* width-weight 0.8)))
-          (send dc draw-line x-mid y-mid minute-arm-end-x minute-arm-end-y)
-          (send dc set-pen (make-pen #:color using-color #:width (* width-weight 0.6)))
-          (send dc draw-line x-mid y-mid second-arm-end-x second-arm-end-y)
-          ;; Draw a smaller clock in each end of the arms
-          (define next-color (make-color (send using-color red) (send using-color green) (send using-color blue) (* (send using-color alpha) 0.8)))
-          (draw-in dc (- hour-arm-end-x 50) (- hour-arm-end-y 50) (+ hour-arm-end-x 50) (+ hour-arm-end-y 50) (* width-weight 0.8) next-color (- remaining-depth 1))
-          (draw-in dc (- minute-arm-end-x 50) (- minute-arm-end-y 50) (+ minute-arm-end-x 50) (+ minute-arm-end-y 50) (* width-weight 0.8) next-color (- remaining-depth 1))
-          (draw-in dc (- second-arm-end-x 50) (- second-arm-end-y 50) (+ second-arm-end-x 50) (+ second-arm-end-y 50) (* width-weight 0.8) next-color (- remaining-depth 1))
-          (void))))
-  (define (handle-frame canvas dc)
-    (define width (send canvas get-width))
-    (define height (send canvas get-height))
-    (define bg-color (make-color 0 0 0 1.0))
-    (send dc set-brush bg-color 'solid)
-    (send dc draw-rectangle 0 0 width height)
-    (define base-color (make-color 17 156 194 1.0)) ; Blueish
-    (define remaining-depth 5)
-    (draw-in dc 0 0 width height 10 base-color remaining-depth)
-    ;; Time at the top-left corner
-    (define curr (current-date))
-    (define curr-h (date-hour curr))
-    (define curr-m (date-minute curr))
-    (define curr-s (date-second curr))
-    (define time-string (format "~a:~a:~a" curr-h curr-m curr-s))
-    (send dc set-text-foreground (make-color 255 255 255 1.0))
-    (send dc draw-text time-string 0 0)
-    (void))
-  (define frame (new frame% [label "Fractal Clock"] [width 1600] [height 1200]))
-  (new canvas% [parent frame] [paint-callback handle-frame])
-  ;; Setup timer to redraw every second
-  (define timer (new timer% [notify-callback (lambda () (send frame refresh))]))
-  (send timer start 1000)
-  ;; Show the frame (apprantly)
-  (send frame show #t))
+            (define depth-to-go-% (/ remaining-depth total-depth))
+            ;; Time stuff
+            (define curr (current-date))
+            (define curr-h (date-hour curr))
+            (define curr-m (date-minute curr))
+            (define curr-s (date-second curr))
+            ;; Coordinates
+            (define hour-arm-length (* 80 depth-to-go-%))
+            (define minute-arm-length (* 150 depth-to-go-%))
+            (define second-arm-length (* 200 depth-to-go-%))
+            (define hour-arm-end-x (+ x-mid (* hour-arm-length (sin (* 2 pi (/ curr-h 12.0))))))
+            (define hour-arm-end-y (+ y-mid (* hour-arm-length (cos (* 2 pi (/ curr-h 12.0))))))
+            (define minute-arm-end-x (+ x-mid (* minute-arm-length (sin (* 2 pi (/ curr-m 60.0))))))
+            (define minute-arm-end-y (+ y-mid (* minute-arm-length (cos (* 2 pi (/ curr-m 60.0))))))
+            (define second-arm-end-x (+ x-mid (* second-arm-length (sin (* 2 pi (/ curr-s 60.0))))))
+            (define second-arm-end-y (+ y-mid (* second-arm-length (cos (* 2 pi (/ curr-s 60.0))))))
+            ;; Draw the arms
+            (send dc set-pen (make-pen #:color using-color #:width (* 10 depth-to-go-% 1.2)))
+            (send dc draw-line x-mid y-mid hour-arm-end-x hour-arm-end-y)
+            (send dc set-pen (make-pen #:color using-color #:width (* 10 depth-to-go-% 0.8)))
+            (send dc draw-line x-mid y-mid minute-arm-end-x minute-arm-end-y)
+            (send dc set-pen (make-pen #:color using-color #:width (* 10 depth-to-go-% 0.6)))
+            (send dc draw-line x-mid y-mid second-arm-end-x second-arm-end-y)
+            ;; Draw a smaller clock in each end of the arms
+            (define next-color
+              (make-color (send using-color red)
+                          (send using-color green)
+                          (send using-color blue)
+                          (* (send using-color alpha) 0.8)))
+            (draw-in dc
+                     hour-arm-end-x
+                     hour-arm-end-y
+                     total-depth next-color (- remaining-depth 1))
+            (draw-in dc
+                     minute-arm-end-x
+                     minute-arm-end-y
+                     total-depth next-color (- remaining-depth 1))
+            (draw-in dc
+                     second-arm-end-x
+                     second-arm-end-y
+                     total-depth next-color (- remaining-depth 1))
+            (void))))
+    (define (handle-frame canvas dc)
+      (define width (send canvas get-width))
+      (define height (send canvas get-height))
+      (define bg-color (make-color 0 0 0 1.0))
+      (send dc set-brush bg-color 'solid)
+      (send dc draw-rectangle 0 0 width height)
+      (define base-color (make-color 17 156 194 1.0)) ; Blueish
+      (define remaining-depth 5)
+      (draw-in dc (/ width 2) (/ height 2) remaining-depth base-color remaining-depth)
+      ;; Time at the top-left corner
+      (define curr (current-date))
+      (define curr-h (date-hour curr))
+      (define curr-m (date-minute curr))
+      (define curr-s (date-second curr))
+      (define time-string (format "~a:~a:~a" curr-h curr-m curr-s))
+      (send dc set-text-foreground (make-color 255 255 255 1.0))
+      (send dc draw-text time-string 0 0)
+      (void))
+    (define frame (new frame% [label "Fractal Clock"] [width 1600] [height 1200]))
+    (new canvas% [parent frame] [paint-callback handle-frame])
+    ;; Setup timer to redraw every second
+    (define timer (new timer% [notify-callback (lambda () (send frame refresh))]))
+    (send timer start 1000)
+    ;; Show the frame (apprantly)
+    (send frame show #t))
