@@ -36,4 +36,3 @@ jobs:
         with:
           name: fractal-clock-${{ matrix.os }}
           path: fractal-clock*
-  
